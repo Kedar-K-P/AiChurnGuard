@@ -9,7 +9,7 @@ import plotly.graph_objects as go
 import requests
 import streamlit as st
 
-API_BASE = os.getenv("CHURN_API_URL", "http://localhost:8000")
+API_BASE = os.getenv("CHURN_API_URL", "https://aichurnguard-5.onrender.com")
 
 st.set_page_config(
     page_title="ChurnGuard · Prediction Dashboard",
