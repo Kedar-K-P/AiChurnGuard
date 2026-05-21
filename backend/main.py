@@ -340,5 +340,3 @@ async def explain(customer: CustomerPayload):
     except Exception as e:
         logger.exception("Explain failed")
         raise HTTPException(status_code=500, detail=str(e))
-async def health():
-    return {"status": "ok"}
