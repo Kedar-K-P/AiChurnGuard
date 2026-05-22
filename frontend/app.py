@@ -299,42 +299,48 @@ def density_chart(pred_df):
 # ── Critical threat list ──────────────────────
 def render_threat_list(pred_df):
     high = pred_df[pred_df["risk_tier"]=="High"].sort_values("churn_probability",ascending=False).head(6)
-    if high.empty:
-        st.markdown('<div style="color:#3a4a6a;font-size:12px;padding:16px;">No critical accounts detected.</div>', unsafe_allow_html=True)
-        return
-    cards = ""
-    for _, row in high.iterrows():
-        prob = float(row.get("churn_probability",0))
-        drop = "HIGH" if row.get("usage_drop_rate_pct",0)>40 else "LOW"
-        vel  = "HIGH" if row.get("account_velocity_score",0)>50 else "LOW"
-        dc   = "#ff4d6d" if drop=="HIGH" else "#00f5a0"
-        vc   = "#00f5a0" if vel=="HIGH"  else "#f5a623"
-        cards += f"""
-        <div style="background:#0b1120;border:1px solid #1a2540;border-radius:10px;padding:14px;margin-bottom:8px;">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
-            <div>
-              <div style="font-size:13px;font-weight:600;color:#e8f0ff;">{row.get('customer_id','—')}</div>
-              <div style="font-size:10px;color:#3a4a6a;margin-top:2px;">{row.get('business_segment','—')} · {row.get('contract_type','—')}</div>
-            </div>
-            <div style="text-align:right;">
-              <div style="font-size:12px;font-weight:600;color:#ff4d6d;">{fmt_inr_short(float(row.get('monthly_charges_inr',0)))}</div>
-              <div style="font-size:10px;color:#ff4d6d;">{prob*100:.0f}% Risk</div>
-            </div>
-          </div>
-          <div style="display:flex;gap:6px;margin-top:8px;">
-            <div style="font-size:9px;letter-spacing:0.8px;background:rgba(255,77,109,0.12);color:{dc};border-radius:4px;padding:2px 7px;">DROP-OFF {drop}</div>
-            <div style="font-size:9px;letter-spacing:0.8px;background:rgba(0,245,160,0.08);color:{vc};border-radius:4px;padding:2px 7px;">VELOCITY {vel}</div>
-          </div>
-        </div>"""
+    # Header
+    n_high = len(high)
     st.markdown(f"""
-    <div style="background:#0f1829;border:1px solid #1a2540;border-radius:14px;padding:16px;height:100%;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+    <div style="background:#0f1829;border:1px solid #1a2540;border-radius:14px;padding:16px 16px 8px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
         <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#ff4d6d;">⚠ Critical Threat List</div>
-        <div style="background:#ff4d6d;color:#fff;font-size:10px;font-weight:700;border-radius:6px;padding:3px 10px;">{len(high)} TOTAL</div>
+        <div style="background:#ff4d6d;color:#fff;font-size:10px;font-weight:700;border-radius:6px;padding:3px 10px;">{n_high} TOTAL</div>
       </div>
-      {cards}
     </div>
     """, unsafe_allow_html=True)
+    if high.empty:
+        st.markdown('<div style="color:#3a4a6a;font-size:12px;padding:8px 16px;">No critical accounts detected.</div>', unsafe_allow_html=True)
+        return
+    # Render each card separately to avoid f-string HTML escaping issues
+    for _, row in high.iterrows():
+        prob = float(row.get("churn_probability", 0))
+        cid  = str(row.get("customer_id", "—"))
+        seg  = str(row.get("business_segment", "—"))
+        cont = str(row.get("contract_type", "—"))
+        mrr  = fmt_inr_short(float(row.get("monthly_charges_inr", 0)))
+        drop = "HIGH" if float(row.get("usage_drop_rate_pct", 0)) > 40 else "LOW"
+        vel  = "HIGH" if float(row.get("account_velocity_score", 0)) > 50 else "LOW"
+        dc   = "#ff4d6d" if drop == "HIGH" else "#00f5a0"
+        vc   = "#00f5a0" if vel  == "HIGH" else "#f5a623"
+        pct  = f"{prob*100:.0f}"
+        st.markdown(
+            "<div style='background:#0b1120;border:1px solid #1a2540;border-radius:10px;"
+            "padding:14px;margin:0 0 8px;'>"
+            "<div style='display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;'>"
+            f"<div><div style='font-size:13px;font-weight:600;color:#e8f0ff;'>{cid}</div>"
+            f"<div style='font-size:10px;color:#3a4a6a;margin-top:2px;'>{seg} · {cont}</div></div>"
+            f"<div style='text-align:right;'><div style='font-size:12px;font-weight:600;color:#ff4d6d;'>{mrr}</div>"
+            f"<div style='font-size:10px;color:#ff4d6d;'>{pct}% Risk</div></div>"
+            "</div>"
+            "<div style='display:flex;gap:6px;margin-top:8px;'>"
+            f"<div style='font-size:9px;letter-spacing:0.8px;background:rgba(255,77,109,0.12);color:{dc};"
+            f"border-radius:4px;padding:2px 7px;'>DROP-OFF {drop}</div>"
+            f"<div style='font-size:9px;letter-spacing:0.8px;background:rgba(0,245,160,0.08);color:{vc};"
+            f"border-radius:4px;padding:2px 7px;'>VELOCITY {vel}</div>"
+            "</div></div>",
+            unsafe_allow_html=True,
+        )
 
 
 # ── Gauge ─────────────────────────────────────
